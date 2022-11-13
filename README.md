@@ -1,2 +1,2 @@
-# sunsynk-api-client
+# Sunsynk API Client
 Client library for Sunsynk API
