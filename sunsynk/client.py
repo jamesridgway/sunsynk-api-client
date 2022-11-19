@@ -1,5 +1,7 @@
 import requests
 
+from sunsynk.plant import Plant
+
 
 class SunsynkClient:
     def __init__(self, username, password):
@@ -8,10 +10,8 @@ class SunsynkClient:
         self.__login()
 
     def get_plants(self):
-        return self.__get('api/v1/plants?page=1&limit=10&name=&status=')
-
-    def get_permissions(self):
-        return self.__get('api/v1/permission?lan=en')
+        plants =  self.__get('api/v1/plants?page=1&limit=10&name=&status=').json()['data']['infos']
+        return [Plant(data) for data in plants]
 
     def get_inverters(self):
         return self.__get('api/v1/inverters?page=1&limit=10&total=0&status=-1&sn=&plantId=&type=-2&softVer=&'\
