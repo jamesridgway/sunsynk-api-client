@@ -13,7 +13,7 @@ setup(
     name='sunsynk-api-client',
     version=Version.get(),
     description='API client for interacting with SunSynk APIs.',
-    long_description=open('README.rst').read(),
+    long_description='API client for interacting with SunSynk APIs.',
     author='James Ridgway',
     url='https://github.com/jamesridgway/sunsynk-api-client',
     license='MIT',
