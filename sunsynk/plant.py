@@ -7,7 +7,7 @@ class Plant(Resource):
     def __init__(self, data):
         self.id = data['id']
         self.name = data['name']
-        self.thumbUrl = data['thumbUrl']
+        self.thumb_url = data['thumbUrl']
         self.status = data['status']
         self.address = data['address']
         self.pac = data['pac']

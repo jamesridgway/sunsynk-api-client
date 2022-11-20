@@ -28,7 +28,8 @@ class SunsynkClient:
         return self.__get(f'api/v1/inverter/grid/{inverter_sn}/realtime?sn={inverter_sn}')
 
     def get_inverter_realtime_battery(self, inverter_sn):
-        return Battery(self.__get(f'api/v1/inverter/battery/{inverter_sn}/realtime?sn={inverter_sn}&lan').json()['data'])
+        return Battery(self.__get(f'api/v1/inverter/battery/{inverter_sn}/realtime?sn={inverter_sn}&lan')
+                       .json()['data'])
 
     def __get(self, path):
         return requests.get(self.__url(path), headers=self.__headers(), timeout=20)
