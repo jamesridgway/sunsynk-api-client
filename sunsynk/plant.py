@@ -1,7 +1,9 @@
 import datetime
 
+from sunsynk.resource import Resource
 
-class Plant:
+
+class Plant(Resource):
     def __init__(self, data):
         self.id = data['id']
         self.name = data['name']
@@ -19,10 +21,3 @@ class Plant:
         self.share = data['share']
         self.plant_permissions = data['plantPermission']
         self.exist_camera = data['existCamera']
-
-    def __repr__(self):
-        return "<{klass} @{id:x} {attrs}>".format(
-            klass=self.__class__.__name__,
-            id=id(self) & 0xFFFFFF,
-            attrs=" ".join("{}={!r}".format(k, v) for k, v in self.__dict__.items()),
-            )
