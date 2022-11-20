@@ -3,6 +3,8 @@ import requests
 from sunsynk.battery import Battery
 from sunsynk.grid import Grid
 from sunsynk.input import Input
+from sunsynk.inverter import Inverter
+from sunsynk.output import Output
 from sunsynk.plant import Plant
 
 
@@ -17,14 +19,15 @@ class SunsynkClient:
         return [Plant(data) for data in plants]
 
     def get_inverters(self):
-        return self.__get('api/v1/inverters?page=1&limit=10&total=0&status=-1&sn=&plantId=&type=-2&softVer=&'\
-                          'hmiVer=&agentCompanyId=-1&gsn=')
+        inverters = self.__get('api/v1/inverters?page=1&limit=10&total=0&status=-1&sn=&plantId=&type=-2&softVer=&' \
+                   'hmiVer=&agentCompanyId=-1&gsn=').json()['data']['infos']
+        return [Inverter(data) for data in inverters]
 
     def get_inverter_realtime_input(self, inverter_sn):
         return Input(self.__get(f'api/v1/inverter/{inverter_sn}/realtime/input').json()['data'])
 
     def get_inverter_realtime_output(self, inverter_sn):
-        return self.__get(f'api/v1/inverter/{inverter_sn}/realtime/output')
+        return Output(self.__get(f'api/v1/inverter/{inverter_sn}/realtime/output').json()['data'])
 
     def get_inverter_realtime_grid(self, inverter_sn):
         return Grid(self.__get(f'api/v1/inverter/grid/{inverter_sn}/realtime?sn={inverter_sn}').json()['data'])
