@@ -47,6 +47,6 @@ class Inverter(Resource):
         self.updated_at = datetime.datetime.strptime(data['updateAt'], "%Y-%m-%dT%H:%M:%SZ")
         self.opened = data['opened']
         self.plant = PlantSummary(data['plant'])
-        self.gateway_vO = GatewayInfo(data['gatewayVO'])
+        self.gateway = GatewayInfo(data['gatewayVO'])
         self.sunsynk_equip = data['sunsynkEquip']
         self.protocol_identifier = data['protocolIdentifier']

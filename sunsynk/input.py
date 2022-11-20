@@ -10,4 +10,4 @@ class Input(Resource):
         self.pv_iv = [PvIv(pviv_data) for pviv_data in data['pvIV']]
 
     def get_power(self):
-        return sum([float(x.ppv) for x in self.pv_iv])
+        return sum(float(x.ppv) for x in self.pv_iv)
