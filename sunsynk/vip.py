@@ -3,6 +3,6 @@ from sunsynk.resource import Resource
 
 class Vip(Resource):
     def __init__(self, data):
-        self.voltage = data['volt']
-        self.current = data['current']
-        self.power = data['power']
+        self.voltage = float(data['volt'])
+        self.current = float(data['current'])
+        self.power = float(data['power'])
