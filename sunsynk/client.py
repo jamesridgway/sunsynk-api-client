@@ -1,3 +1,5 @@
+import json
+
 import aiohttp
 
 from sunsynk.battery import Battery
@@ -11,11 +13,12 @@ from sunsynk.plant import Plant
 class SunsynkClient:
 
     @classmethod
-    async def create(cls, username, password):
-        self = SunsynkClient(username, password)
+    async def create(cls, username, password, base_url=None):
+        self = SunsynkClient(username, password, base_url)
         return await self.login()
 
-    def __init__(self, username, password):
+    def __init__(self, username, password, base_url=None):
+        self.base_url = 'https://pv.inteless.com' if base_url is None else base_url
         self.session = aiohttp.ClientSession()
         self.access_token = None
         self.refresh_token = None
@@ -41,8 +44,9 @@ class SunsynkClient:
     async def get_inverters(self):
         resp = await self.__get('api/v1/inverters?page=1&limit=10&total=0&status=-1&sn=&plantId=&type=-2&softVer=&' \
                    'hmiVer=&agentCompanyId=-1&gsn=')
-        json = await resp.json()
-        inverters = json['data']['infos']
+        body = await resp.json()
+        print(json.dumps(body))
+        inverters = body['data']['infos']
         return [Inverter(data) for data in inverters]
 
     async def get_inverter_realtime_input(self, inverter_sn):
@@ -94,4 +98,4 @@ class SunsynkClient:
         return self
 
     def __url(self, path):
-        return f'https://pv.inteless.com/{path}'
+        return f'{self.base_url}/{path}'
