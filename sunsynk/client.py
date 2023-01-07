@@ -35,8 +35,8 @@ class SunsynkClient:
 
     async def get_plants(self):
         resp = await self.__get('api/v1/plants?page=1&limit=10&name=&status=')
-        json = await resp.json()
-        plants = json['data']['infos']
+        body = await resp.json()
+        plants = body['data']['infos']
         return [Plant(data) for data in plants]
 
     async def get_inverters(self):
@@ -48,23 +48,23 @@ class SunsynkClient:
 
     async def get_inverter_realtime_input(self, inverter_sn):
         resp = await self.__get(f'api/v1/inverter/{inverter_sn}/realtime/input')
-        json = await resp.json()
-        return Input(json['data'])
+        body = await resp.json()
+        return Input(body['data'])
 
     async def get_inverter_realtime_output(self, inverter_sn):
         resp = await self.__get(f'api/v1/inverter/{inverter_sn}/realtime/output')
-        json = await resp.json()
-        return Output(json['data'])
+        body = await resp.json()
+        return Output(body['data'])
 
     async def get_inverter_realtime_grid(self, inverter_sn):
         resp = await self.__get(f'api/v1/inverter/grid/{inverter_sn}/realtime?sn={inverter_sn}')
-        json = await resp.json()
-        return Grid(json['data'])
+        body = await resp.json()
+        return Grid(body['data'])
 
     async def get_inverter_realtime_battery(self, inverter_sn):
         resp = await self.__get(f'api/v1/inverter/battery/{inverter_sn}/realtime?sn={inverter_sn}&lan')
-        json = await resp.json()
-        return Battery(json['data'])
+        body = await resp.json()
+        return Battery(body['data'])
 
     async def __get(self, path):
         return await self.session.get(self.__url(path), headers=self.__headers(), timeout=20)

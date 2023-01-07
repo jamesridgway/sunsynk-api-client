@@ -1,78 +1,7 @@
-import json
-
 import pytest
-from aiohttp import web
 
 from sunsynk.client import SunsynkClient
-
-
-async def login(request):
-    payload = {
-        'data': {
-            'access_token': 'AT123',
-            'refresh_token': 'RT456'
-        }
-    }
-    headers = {
-        'Content-Type': 'application/json'
-    }
-    return web.Response(text=json.dumps(payload), headers=headers)
-
-
-async def get_inverters(request):
-    payload = {
-        "code": 0,
-        "msg": "Success",
-        "data": {
-            "pageSize": 10,
-            "pageNumber": 1,
-            "total": 1,
-            "infos": [
-                {
-                    "sn": "1029384756",
-                    "alias": "1029384756",
-                    "gsn": "E0192837465",
-                    "status": 1,
-                    "type": 2,
-                    "commTypeName": "RS485",
-                    "custCode": 29,
-                    "version": {
-                        "masterVer": "2.3.7.4",
-                        "softVer": "1.5.1.5",
-                        "hardVer": "",
-                        "hmiVer": "E.4.2.4",
-                        "bmsVer": ""
-                    },
-                    "model": "",
-                    "equipMode": None,
-                    "pac": 61,
-                    "etoday": 1.7,
-                    "etotal": 375.1,
-                    "updateAt": "2023-01-07T15:40:02Z", "opened": 1,
-                    "plant": {
-                        "id": 51013,
-                        "name": "John Smith",
-                        "type": 2,
-                        "master": None,
-                        "installer": None,
-                        "email": None,
-                        "phone": None
-                    },
-                    "gatewayVO": {
-                        "gsn": "E0192837465",
-                        "status": 2
-                    },
-                    "sunsynkEquip": True,
-                    "protocolIdentifier": "2"
-                }
-            ]
-        },
-        "success": True
-    }
-    headers = {
-        'Content-Type': 'application/json'
-    }
-    return web.Response(text=json.dumps(payload), headers=headers)
+from tests.mock_api_server import MockApiServer
 
 
 async def create_test_sunsynk_client(aiohttp_client, app):
@@ -82,20 +11,72 @@ async def create_test_sunsynk_client(aiohttp_client, app):
 
 @pytest.mark.asyncio
 async def test_login(aiohttp_client, event_loop):
-    app = web.Application()
-    app.router.add_post('/oauth/token', login)
-    client = await create_test_sunsynk_client(aiohttp_client, app)
+    mock_api_server = MockApiServer(aiohttp_client)
+    client = await mock_api_server.client()
     assert isinstance(client, SunsynkClient)
 
 
 @pytest.mark.asyncio
 async def test_get_inverters(aiohttp_client, event_loop):
-    app = web.Application()
-    app.router.add_post('/oauth/token', login)
-    app.router.add_get('/api/v1/inverters', get_inverters)
-    client = await create_test_sunsynk_client(aiohttp_client, app)
+    mock_api_server = MockApiServer(aiohttp_client)
+    client = await mock_api_server.client()
 
     inverters = await client.get_inverters()
 
     assert inverters[0].sn == '1029384756'
     assert inverters[0].gsn == 'E0192837465'
+
+
+@pytest.mark.asyncio
+async def test_get_plants(aiohttp_client, event_loop):
+    mock_api_server = MockApiServer(aiohttp_client)
+    client = await mock_api_server.client()
+
+    plants = await client.get_plants()
+
+    assert plants[0].id == 12345
+    assert plants[0].name == 'John Smith'
+
+@pytest.mark.asyncio
+async def test_get_inverter_realtime_input(aiohttp_client, event_loop):
+    mock_api_server = MockApiServer(aiohttp_client)
+    client = await mock_api_server.client()
+
+    inverters = await client.get_inverters()
+    input = await client.get_inverter_realtime_input(inverters[0].sn)
+
+    assert input.get_power() == 9.0
+
+
+@pytest.mark.asyncio
+async def test_get_inverter_realtime_output(aiohttp_client, event_loop):
+    mock_api_server = MockApiServer(aiohttp_client)
+    client = await mock_api_server.client()
+
+    inverters = await client.get_inverters()
+    output = await client.get_inverter_realtime_output(inverters[0].sn)
+
+    assert output.vip[0].voltage == 230.8
+    assert output.vip[0].current == 0.3
+    assert output.vip[0].power == -50
+@pytest.mark.asyncio
+async def test_get_inverter_realtime_grid(aiohttp_client, event_loop):
+    mock_api_server = MockApiServer(aiohttp_client)
+    client = await mock_api_server.client()
+
+    inverters = await client.get_inverters()
+    grid = await client.get_inverter_realtime_grid(inverters[0].sn)
+
+    assert grid.get_power() == 610
+    assert grid.get_current() == 0.8
+    assert grid.get_voltage() == 233.6
+
+@pytest.mark.asyncio
+async def test_get_inverter_realtime_battery(aiohttp_client, event_loop):
+    mock_api_server = MockApiServer(aiohttp_client)
+    client = await mock_api_server.client()
+
+    inverters = await client.get_inverters()
+    battery = await client.get_inverter_realtime_battery(inverters[0].sn)
+
+    assert battery.power == -18

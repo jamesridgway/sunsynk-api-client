@@ -21,14 +21,14 @@ class Grid(Resource):
     def get_voltage(self):
         if len(self.vip) == 0:
             return None
-        return self.vip[0].voltage
+        return float(self.vip[0].voltage)
 
     def get_current(self):
         if len(self.vip) == 0:
             return None
-        return self.vip[0].current
+        return float(self.vip[0].current)
 
     def get_power(self):
         if len(self.vip) == 0:
             return None
-        return self.vip[0].power
+        return float(self.vip[0].power)
