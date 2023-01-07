@@ -17,12 +17,15 @@ class MockApiServer:
         self.app.router.add_get('/api/v1/inverter/1029384756/realtime/input', self.get_inverter_realtime_input)
         self.app.router.add_get('/api/v1/inverter/1029384756/realtime/output', self.get_inverter_realtime_output)
 
-    async def client(self):
+    async def client(self, username='myuser'):
         client = await self.aiohttp_client(self.app)
-        return await SunsynkClient.create('myuser', 'letmein', base_url=f'http://{client.host}:{client.port}')
+        return await SunsynkClient.create(username, 'letmein', base_url=f'http://{client.host}:{client.port}')
 
     async def login(self, request):
+        request_body = await request.json()
+        success = request_body['username'] == 'myuser'
         payload = {
+            'success': success,
             'data': {
                 'access_token': 'AT123',
                 'refresh_token': 'RT456'

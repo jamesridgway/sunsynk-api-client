@@ -8,6 +8,11 @@ from sunsynk.output import Output
 from sunsynk.plant import Plant
 
 
+class InvalidCredentialsException(Exception):
+    def __init__(self):
+        super().__init__('Invalid username or password')
+
+
 class SunsynkClient:
 
     @classmethod
@@ -90,9 +95,11 @@ class SunsynkClient:
                                  json=payload)
         if resp.status == 200:
             resp_body = await resp.json()
-            self.access_token = resp_body['data']['access_token']
-            self.refresh_token = resp_body['data']['refresh_token']
-        return self
+            if resp_body['success']:
+                self.access_token = resp_body['data']['access_token']
+                self.refresh_token = resp_body['data']['refresh_token']
+                return self
+        raise InvalidCredentialsException()
 
     def __url(self, path):
         return f'{self.base_url}/{path}'

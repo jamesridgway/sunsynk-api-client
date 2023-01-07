@@ -1,12 +1,7 @@
 import pytest
 
-from sunsynk.client import SunsynkClient
+from sunsynk.client import SunsynkClient, InvalidCredentialsException
 from tests.mock_api_server import MockApiServer
-
-
-async def create_test_sunsynk_client(aiohttp_client, app):
-    client = await aiohttp_client(app)
-    return await SunsynkClient.create('myuser', 'letmein', base_url=f'http://{client.host}:{client.port}')
 
 
 @pytest.mark.asyncio
@@ -15,6 +10,12 @@ async def test_login(aiohttp_client, event_loop):
     client = await mock_api_server.client()
     assert isinstance(client, SunsynkClient)
 
+
+@pytest.mark.asyncio
+async def test_login_invalid(aiohttp_client, event_loop):
+    mock_api_server = MockApiServer(aiohttp_client)
+    with pytest.raises(InvalidCredentialsException):
+        await mock_api_server.client(username='invalid')
 
 @pytest.mark.asyncio
 async def test_get_inverters(aiohttp_client, event_loop):
@@ -59,6 +60,7 @@ async def test_get_inverter_realtime_output(aiohttp_client, event_loop):
     assert output.vip[0].voltage == 230.8
     assert output.vip[0].current == 0.3
     assert output.vip[0].power == -50
+
 @pytest.mark.asyncio
 async def test_get_inverter_realtime_grid(aiohttp_client, event_loop):
     mock_api_server = MockApiServer(aiohttp_client)
