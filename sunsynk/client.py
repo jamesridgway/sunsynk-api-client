@@ -1,5 +1,3 @@
-import json
-
 import aiohttp
 
 from sunsynk.battery import Battery
@@ -45,7 +43,6 @@ class SunsynkClient:
         resp = await self.__get('api/v1/inverters?page=1&limit=10&total=0&status=-1&sn=&plantId=&type=-2&softVer=&' \
                    'hmiVer=&agentCompanyId=-1&gsn=')
         body = await resp.json()
-        print(json.dumps(body))
         inverters = body['data']['infos']
         return [Inverter(data) for data in inverters]
 
