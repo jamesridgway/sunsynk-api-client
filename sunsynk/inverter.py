@@ -5,48 +5,48 @@ from sunsynk.resource import Resource
 
 class InverterVersion(Resource):
     def __init__(self, data):
-        self.master_ver = data['masterVer']
-        self.soft_ver = data['softVer']
-        self.hard_ver = data['hardVer']
-        self.hmi_ver = data['hmiVer']
-        self.bms_ver = data['bmsVer']
+        self.master_ver = data.get('masterVer')
+        self.soft_ver = data.get('softVer')
+        self.hard_ver = data.get('hardVer')
+        self.hmi_ver = data.get('hmiVer')
+        self.bms_ver = data.get('bmsVer')
 
 
 class PlantSummary(Resource):
     def __init__(self, data):
-        self.id = data['id']
-        self.name = data['name']
-        self.type = data['type']
-        self.master = data['master']
-        self.installer = data['installer']
-        self.email = data['email']
-        self.phone = data['phone']
+        self.id = data.get('id')
+        self.name = data.get('name')
+        self.type = data.get('type')
+        self.master = data.get('master')
+        self.installer = data.get('installer')
+        self.email = data.get('email')
+        self.phone = data.get('phone')
 
 
 class GatewayInfo(Resource):
     def __init__(self, data):
-        self.gsn = data['gsn']
-        self.status = data['status']
+        self.gsn = data.get('gsn')
+        self.status = data.get('status')
 
 
 class Inverter(Resource):
     def __init__(self, data):
-        self.sn = data['sn']
-        self.alias = data['alias']
-        self.gsn = data['gsn']
-        self.status = data['status']
-        self.type = data['type']
-        self.comm_type_name = data['commTypeName']
-        self.cust_code = data['custCode']
-        self.version = InverterVersion(data['version'])
-        self.model = data['model']
-        self.equip_mode = data['equipMode']
-        self.pac = data['pac']
-        self.generated_today = data['etoday']
-        self.generated_total = data['etotal']
-        self.updated_at = datetime.datetime.strptime(data['updateAt'], "%Y-%m-%dT%H:%M:%SZ")
-        self.opened = data['opened']
-        self.plant = PlantSummary(data['plant'])
-        self.gateway = GatewayInfo(data['gatewayVO'])
-        self.sunsynk_equip = data['sunsynkEquip']
-        self.protocol_identifier = data['protocolIdentifier']
+        self.sn = data.get('sn')
+        self.alias = data.get('alias')
+        self.gsn = data.get('gsn')
+        self.status = data.get('status')
+        self.type = data.get('type')
+        self.comm_type_name = data.get('commTypeName')
+        self.cust_code = data.get('custCode')
+        self.version = InverterVersion(data.get('version')) if 'version' in data.keys() else None
+        self.model = data.get('model')
+        self.equip_mode = data.get('equipMode')
+        self.pac = data.get('pac')
+        self.generated_today = data.get('etoday')
+        self.generated_total = data.get('etotal')
+        self.updated_at = datetime.datetime.strptime(data.get('updateAt'), "%Y-%m-%dT%H:%M:%SZ") if 'updateAt' in data.keys() else None
+        self.opened = data.get('opened')
+        self.plant = PlantSummary(data.get('plant')) if 'plant' in data.keys() else None
+        self.gateway = GatewayInfo(data.get('gatewayVO')) if 'gatewayVO' in data.keys() else None
+        self.sunsynk_equip = data.get('sunsynkEquip')
+        self.protocol_identifier = data.get('protocolIdentifier')
