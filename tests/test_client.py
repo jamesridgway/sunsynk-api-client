@@ -82,3 +82,6 @@ async def test_get_inverter_realtime_battery(aiohttp_client, event_loop):
     battery = await client.get_inverter_realtime_battery(inverters[0].sn)
 
     assert battery.power == -18
+    assert battery.get_power() == -18
+    assert battery.get_current() == -0.4
+    assert battery.get_voltage() == 53.3
