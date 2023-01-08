@@ -44,7 +44,8 @@ class Inverter(Resource):
         self.pac = data.get('pac')
         self.generated_today = data.get('etoday')
         self.generated_total = data.get('etotal')
-        self.updated_at = datetime.datetime.strptime(data.get('updateAt'), "%Y-%m-%dT%H:%M:%SZ") if 'updateAt' in data.keys() else None
+        self.updated_at = datetime.datetime\
+            .strptime(data.get('updateAt'), "%Y-%m-%dT%H:%M:%SZ") if 'updateAt' in data.keys() else None
         self.opened = data.get('opened')
         self.plant = PlantSummary(data.get('plant')) if 'plant' in data.keys() else None
         self.gateway = GatewayInfo(data.get('gatewayVO')) if 'gatewayVO' in data.keys() else None
