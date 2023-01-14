@@ -71,8 +71,12 @@ class SunsynkClient:
         body = await resp.json()
         return Battery(body['data'])
 
-    async def __get(self, path):
-        return await self.session.get(self.__url(path), headers=self.__headers(), timeout=20)
+    async def __get(self, path, attempts=1):
+        resp = await self.session.get(self.__url(path), headers=self.__headers(), timeout=20)
+        if resp.status == 401 and attempts == 1:
+            await self.login()
+            return await self.__get(path, attempts=attempts+1)
+        return resp
 
     def __headers(self):
         headers = {
