@@ -41,11 +41,11 @@ class Battery(Resource):
         self.batt_1_factory = data['batt1Factory']
         self.batt_2_factory = data['batt2Factory']
 
-    def get_voltage(self):
+    def get_voltage(self) -> float:
         return float(self.voltage)
 
-    def get_current(self):
+    def get_current(self) -> float:
         return float(self.current)
 
-    def get_power(self):
+    def get_power(self) -> float:
         return float(self.power)

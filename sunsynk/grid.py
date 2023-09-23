@@ -18,17 +18,17 @@ class Grid(Resource):
         self.limiter_power_arr = data['limiterPowerArr']
         self.limiter_total_power = data['limiterTotalPower']
 
-    def get_voltage(self):
+    def get_voltage(self) -> float | None:
         if len(self.vip) == 0:
             return None
         return float(self.vip[0].voltage)
 
-    def get_current(self):
+    def get_current(self) -> float | None:
         if len(self.vip) == 0:
             return None
         return float(self.vip[0].current)
 
-    def get_power(self):
+    def get_power(self) -> float | None:
         if len(self.vip) == 0:
             return None
         return float(self.vip[0].power)

@@ -8,7 +8,7 @@ VERSION_FILENAME = os.path.abspath(os.path.join(os.path.dirname(__file__), 'vers
 
 class Version:
     @staticmethod
-    def generate():
+    def generate() -> str:
         with subprocess.Popen(["git", "describe", "--always", "--tags"],
                               stdout=subprocess.PIPE,
                               stderr=None) as process:
@@ -19,7 +19,7 @@ class Version:
             return version
 
     @staticmethod
-    def get(retry=True):
+    def get(retry=True) -> str:
         try:
             # pylint: disable=C0415
             from sunsynk.version import SUNSYNK_API_CLIENT_VERSION
@@ -36,6 +36,6 @@ class Version:
             return 'unknown'
 
     @staticmethod
-    def get_env_info():
+    def get_env_info() -> str:
         os_info = f"Release: {platform.release()}, Platform: {platform.platform()}"
         return f"(Python: {platform.python_version()}), OS: ({os_info}). Default Encoding: {sys.getdefaultencoding()}"

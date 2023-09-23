@@ -16,11 +16,11 @@ class InvalidCredentialsException(Exception):
 class SunsynkClient:
 
     @classmethod
-    async def create(cls, username, password, base_url=None):
+    async def create(cls, username: str, password: str, base_url: str = None):
         self = SunsynkClient(username, password, base_url)
         return await self.login()
 
-    def __init__(self, username, password, base_url=None):
+    def __init__(self, username: str, password: str, base_url: str=None):
         self.base_url = 'https://pv.inteless.com' if base_url is None else base_url
         self.session = aiohttp.ClientSession()
         self.access_token = None
@@ -38,47 +38,47 @@ class SunsynkClient:
     async def close(self):
         await self.session.close()
 
-    async def get_plants(self):
+    async def get_plants(self) -> list[Plant]:
         resp = await self.__get('api/v1/plants?page=1&limit=10&name=&status=')
         body = await resp.json()
         plants = body['data']['infos']
         return [Plant(data) for data in plants]
 
-    async def get_inverters(self):
+    async def get_inverters(self) -> list[Inverter]:
         resp = await self.__get('api/v1/inverters?page=1&limit=10&total=0&status=-1&sn=&plantId=&type=-2&softVer=&' \
-                   'hmiVer=&agentCompanyId=-1&gsn=')
+                                'hmiVer=&agentCompanyId=-1&gsn=')
         body = await resp.json()
         inverters = body['data']['infos']
         return [Inverter(data) for data in inverters]
 
-    async def get_inverter_realtime_input(self, inverter_sn):
+    async def get_inverter_realtime_input(self, inverter_sn: str) -> Input:
         resp = await self.__get(f'api/v1/inverter/{inverter_sn}/realtime/input')
         body = await resp.json()
         return Input(body['data'])
 
-    async def get_inverter_realtime_output(self, inverter_sn):
+    async def get_inverter_realtime_output(self, inverter_sn: str) -> Output:
         resp = await self.__get(f'api/v1/inverter/{inverter_sn}/realtime/output')
         body = await resp.json()
         return Output(body['data'])
 
-    async def get_inverter_realtime_grid(self, inverter_sn):
+    async def get_inverter_realtime_grid(self, inverter_sn: str) -> Grid:
         resp = await self.__get(f'api/v1/inverter/grid/{inverter_sn}/realtime?sn={inverter_sn}')
         body = await resp.json()
         return Grid(body['data'])
 
-    async def get_inverter_realtime_battery(self, inverter_sn):
+    async def get_inverter_realtime_battery(self, inverter_sn: str) -> Battery:
         resp = await self.__get(f'api/v1/inverter/battery/{inverter_sn}/realtime?sn={inverter_sn}&lan')
         body = await resp.json()
         return Battery(body['data'])
 
-    async def __get(self, path, attempts=1):
+    async def __get(self, path: str, attempts: int = 1):
         resp = await self.session.get(self.__url(path), headers=self.__headers(), timeout=20)
         if resp.status == 401 and attempts == 1:
             await self.login()
-            return await self.__get(path, attempts=attempts+1)
+            return await self.__get(path, attempts=attempts + 1)
         return resp
 
-    def __headers(self):
+    def __headers(self) -> dict[str, str]:
         headers = {
             "Content-Type": "application/json"
         }
@@ -94,9 +94,9 @@ class SunsynkClient:
             'client_id': 'csp-web'
         }
         resp = await self.session.post(self.__url('oauth/token'),
-                                 headers={"Content-Type": "application/json"},
-                                 timeout=20,
-                                 json=payload)
+                                       headers={"Content-Type": "application/json"},
+                                       timeout=20,
+                                       json=payload)
         if resp.status == 200:
             resp_body = await resp.json()
             if resp_body['success']:
@@ -105,5 +105,5 @@ class SunsynkClient:
                 return self
         raise InvalidCredentialsException()
 
-    def __url(self, path):
+    def __url(self, path: str) -> str:
         return f'{self.base_url}/{path}'
