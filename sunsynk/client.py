@@ -21,7 +21,7 @@ class SunsynkClient:
         return await self.login()
 
     def __init__(self, username: str, password: str, base_url: str=None):
-        self.base_url = 'https://pv.inteless.com' if base_url is None else base_url
+        self.base_url = 'https://api.sunsynk.net' if base_url is None else base_url
         self.session = aiohttp.ClientSession()
         self.access_token = None
         self.refresh_token = None
