@@ -1,6 +1,9 @@
+import base64
 import json
 
 from aiohttp import web
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import padding, rsa
 
 from sunsynk.client import SunsynkClient
 
@@ -8,8 +11,15 @@ from sunsynk.client import SunsynkClient
 class MockApiServer:
     def __init__(self, aiohttp_client):
         self.aiohttp_client = aiohttp_client
+        self._private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        public_der = self._private_key.public_key().public_bytes(
+            encoding=serialization.Encoding.DER,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+        )
+        self._public_key_b64 = base64.b64encode(public_der).decode()
         self.app = web.Application()
-        self.app.router.add_post('/oauth/token', self.login)
+        self.app.router.add_get('/anonymous/publicKey', self.get_public_key)
+        self.app.router.add_post('/oauth/token/new', self.login)
         self.app.router.add_get('/api/v1/inverters', self.get_inverters)
         self.app.router.add_get('/api/v1/plants', self.get_plants)
         self.app.router.add_get('/api/v1/inverter/grid/1029384756/realtime', self.get_inverter_realtime_grid)
@@ -21,9 +31,24 @@ class MockApiServer:
         client = await self.aiohttp_client(self.app)
         return await SunsynkClient.create(username, 'letmein', base_url=f'http://{client.host}:{client.port}')
 
+    async def get_public_key(self, request):
+        payload = {
+            'code': 0,
+            'msg': 'Success',
+            'data': self._public_key_b64,
+            'success': True,
+        }
+        return web.Response(text=json.dumps(payload),
+                            headers={'Content-Type': 'application/json'})
+
     async def login(self, request):
         request_body = await request.json()
-        success = request_body['username'] == 'myuser'
+        try:
+            ciphertext = base64.b64decode(request_body['password'])
+            decrypted = self._private_key.decrypt(ciphertext, padding.PKCS1v15()).decode()
+        except Exception:
+            decrypted = None
+        success = request_body['username'] == 'myuser' and decrypted == 'letmein'
         payload = {
             'success': success,
             'data': {
