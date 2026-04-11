@@ -5,20 +5,20 @@ from tests.mock_api_server import MockApiServer
 
 
 @pytest.mark.asyncio
-async def test_login(aiohttp_client, event_loop):
+async def test_login(aiohttp_client):
     mock_api_server = MockApiServer(aiohttp_client)
     client = await mock_api_server.client()
     assert isinstance(client, SunsynkClient)
 
 
 @pytest.mark.asyncio
-async def test_login_invalid(aiohttp_client, event_loop):
+async def test_login_invalid(aiohttp_client):
     mock_api_server = MockApiServer(aiohttp_client)
     with pytest.raises(InvalidCredentialsException):
         await mock_api_server.client(username='invalid')
 
 @pytest.mark.asyncio
-async def test_get_inverters(aiohttp_client, event_loop):
+async def test_get_inverters(aiohttp_client):
     mock_api_server = MockApiServer(aiohttp_client)
     client = await mock_api_server.client()
 
@@ -29,7 +29,7 @@ async def test_get_inverters(aiohttp_client, event_loop):
 
 
 @pytest.mark.asyncio
-async def test_get_plants(aiohttp_client, event_loop):
+async def test_get_plants(aiohttp_client):
     mock_api_server = MockApiServer(aiohttp_client)
     client = await mock_api_server.client()
 
@@ -39,7 +39,7 @@ async def test_get_plants(aiohttp_client, event_loop):
     assert plants[0].name == 'John Smith'
 
 @pytest.mark.asyncio
-async def test_get_inverter_realtime_input(aiohttp_client, event_loop):
+async def test_get_inverter_realtime_input(aiohttp_client):
     mock_api_server = MockApiServer(aiohttp_client)
     client = await mock_api_server.client()
 
@@ -50,7 +50,7 @@ async def test_get_inverter_realtime_input(aiohttp_client, event_loop):
 
 
 @pytest.mark.asyncio
-async def test_get_inverter_realtime_output(aiohttp_client, event_loop):
+async def test_get_inverter_realtime_output(aiohttp_client):
     mock_api_server = MockApiServer(aiohttp_client)
     client = await mock_api_server.client()
 
@@ -62,7 +62,7 @@ async def test_get_inverter_realtime_output(aiohttp_client, event_loop):
     assert output.vip[0].power == -50
 
 @pytest.mark.asyncio
-async def test_get_inverter_realtime_grid(aiohttp_client, event_loop):
+async def test_get_inverter_realtime_grid(aiohttp_client):
     mock_api_server = MockApiServer(aiohttp_client)
     client = await mock_api_server.client()
 
@@ -74,7 +74,7 @@ async def test_get_inverter_realtime_grid(aiohttp_client, event_loop):
     assert grid.get_voltage() == 233.6
 
 @pytest.mark.asyncio
-async def test_get_inverter_realtime_battery(aiohttp_client, event_loop):
+async def test_get_inverter_realtime_battery(aiohttp_client):
     mock_api_server = MockApiServer(aiohttp_client)
     client = await mock_api_server.client()
 
