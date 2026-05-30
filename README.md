@@ -26,7 +26,7 @@ An API client library for reading data from the Sunsynk API that is used by the 
     
                 await client.get_inverter_realtime_output(inverter.sn)
     
-                print(f"Inverter (sn: {inverter.sn}) is drawing {grid.get_power()}kWh from the grid, {battery.power}kWh from battery and {solar_pv.get_power()}kWh.")
+                print(f"Inverter (sn: {inverter.sn}) is drawing {grid.get_power()}W from the grid, {battery.power}W from battery and {solar_pv.get_power()}W.")
     
         print('Done!')
     
