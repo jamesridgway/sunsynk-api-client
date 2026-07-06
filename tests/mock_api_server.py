@@ -26,6 +26,7 @@ class MockApiServer:
         self.app.router.add_get('/api/v1/inverter/battery/1029384756/realtime', self.get_inverter_realtime_battery)
         self.app.router.add_get('/api/v1/inverter/1029384756/realtime/input', self.get_inverter_realtime_input)
         self.app.router.add_get('/api/v1/inverter/1029384756/realtime/output', self.get_inverter_realtime_output)
+        self.app.router.add_get('/api/v1/inverter/load/1029384756/realtime', self.get_inverter_realtime_load)
 
     async def client(self, username='myuser'):
         client = await self.aiohttp_client(self.app)
@@ -301,6 +302,35 @@ class MockApiServer:
                 "pInv": 9,
                 "pac": -50,
                 "fac": 50.0
+            },
+            "success": True
+        }
+        headers = {
+            'Content-Type': 'application/json'
+        }
+        return web.Response(text=json.dumps(payload), headers=headers)
+
+    async def get_inverter_realtime_load(self, request):
+        payload = {
+            "code": 0,
+            "msg": "Success",
+            "data": {
+                "totalUsed": 3133.10,
+                "dailyUsed": 34.70,
+                "vip": [
+                    {
+                        "volt": "246.6",
+                        "current": "0.0",
+                        "power": 3427
+                    }
+                ],
+                "totalPower": 3427,
+                "smartLoadStatus": -1,
+                "loadFac": 50.01,
+                "upsPowerL1": 5.0,
+                "upsPowerL2": 0.0,
+                "upsPowerL3": 0.0,
+                "upsPowerTotal": 5.0
             },
             "success": True
         }

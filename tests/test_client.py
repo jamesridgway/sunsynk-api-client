@@ -85,3 +85,31 @@ async def test_get_inverter_realtime_battery(aiohttp_client):
     assert battery.get_power() == -18
     assert battery.get_current() == -0.4
     assert battery.get_voltage() == 53.3
+
+
+@pytest.mark.asyncio
+async def test_get_inverter_realtime_load(aiohttp_client):
+    mock_api_server = MockApiServer(aiohttp_client)
+    client = await mock_api_server.client()
+
+    inverters = await client.get_inverters()
+    load = await client.get_inverter_realtime_load(inverters[0].sn)
+
+    assert load.total_used == 3133.10
+    assert load.daily_used == 34.70
+    assert load.total_power == 3427
+    assert load.smart_load_status == -1
+    assert load.load_fac == 50.01
+    assert load.ups_power_l1 == 5.0
+    assert load.ups_power_l2 == 0.0
+    assert load.ups_power_l3 == 0.0
+    assert load.ups_power_total == 5.0
+
+    assert load.get_voltage() == 246.6
+    assert load.get_current() == 0.0
+    assert load.get_power() == 3427.0
+
+    load.vip = []
+    assert load.get_voltage() is None
+    assert load.get_current() is None
+    assert load.get_power() is None

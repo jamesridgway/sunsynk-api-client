@@ -10,6 +10,7 @@ from sunsynk.battery import Battery
 from sunsynk.grid import Grid
 from sunsynk.input import Input
 from sunsynk.inverter import Inverter
+from sunsynk.load import Load
 from sunsynk.output import Output
 from sunsynk.plant import Plant
 
@@ -74,6 +75,11 @@ class SunsynkClient:
         resp = await self.__get(f'api/v1/inverter/grid/{inverter_sn}/realtime?sn={inverter_sn}')
         body = await resp.json()
         return Grid(body['data'])
+
+    async def get_inverter_realtime_load(self, inverter_sn: str) -> Load:
+        resp = await self.__get(f'api/v1/inverter/load/{inverter_sn}/realtime?sn={inverter_sn}')
+        body = await resp.json()
+        return Load(body['data'])
 
     async def get_inverter_realtime_battery(self, inverter_sn: str) -> Battery:
         resp = await self.__get(f'api/v1/inverter/battery/{inverter_sn}/realtime?sn={inverter_sn}&lan')
