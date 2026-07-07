@@ -27,6 +27,9 @@ class MockApiServer:
         self.app.router.add_get('/api/v1/inverter/1029384756/realtime/input', self.get_inverter_realtime_input)
         self.app.router.add_get('/api/v1/inverter/1029384756/realtime/output', self.get_inverter_realtime_output)
         self.app.router.add_get('/api/v1/inverter/load/1029384756/realtime', self.get_inverter_realtime_load)
+        self.app.router.add_get('/api/v1/plant/12345', self.get_plant)
+        self.app.router.add_get('/api/v1/weather', self.get_weather)
+
 
     async def client(self, username='myuser'):
         client = await self.aiohttp_client(self.app)
@@ -338,5 +341,113 @@ class MockApiServer:
             'Content-Type': 'application/json'
         }
         return web.Response(text=json.dumps(payload), headers=headers)
+
+    async def get_plant(self, request):
+        payload = {
+            "code": 0,
+            "msg": "Success",
+            "data": {
+                "id": 12345,
+                "name": "John Smith",
+                "totalPower": 3.68,
+                "thumbUrl": "https://",
+                "joinDate": "2025-02-20T00:00:00Z",
+                "type": 2,
+                "status": 1,
+                "charges": [
+                    {
+                        "id": 112001545,
+                        "startRange": "00:00",
+                        "endRange": "24:00",
+                        "price": 0.15,
+                        "type": 1,
+                        "stationId": 12345,
+                        "createAt": "2026-03-30T13:13:36Z",
+                        "status": None
+                    }
+                ],
+                "products": None,
+                "lon": -0.724613,
+                "lat": 51.322984,
+                "address": "123 Fake Street",
+                "master": {
+                    "id": 54321,
+                    "nickname": "master@gmail.com",
+                    "mobile": None
+                },
+                "currency": {
+                    "id": 366,
+                    "code": "GBP",
+                    "text": "£"
+                },
+                "timezone": {
+                    "id": 234,
+                    "code": "Europe/London",
+                    "text": "(UTC+00:00)Dublin,Edinburgh,Lisbon,London"
+                },
+                "realtime": {
+                    "pac": 2484,
+                    "efficiency": 0.000,
+                    "etoday": 9.00,
+                    "emonth": 119.40,
+                    "eyear": 1776.50,
+                    "etotal": 5622.30,
+                    "totalPower": 3.68,
+                    "currency": {
+                        "id": 366,
+                        "code": "GBP",
+                        "text": "£"
+                    },
+                    "invest": 8320.00,
+                    "income": 1.3500,
+                    "updateAt": "2026-07-07T12:02:52Z"
+                },
+                "createAt": "2022-10-03T15:39:21.000+00:00",
+                "phone": "01257443377",
+                "email": "",
+                "installer": "",
+                "principal": "Contact Solar",
+                "plantPermission": [
+                    "station.share.cancle"
+                ],
+                "fluxProducts": None,
+                "productWarrantyRegistered": 0,
+                "ctEnable": 1,
+                "invest": 8320.00,
+                "epexProduct": None
+            },
+            "success": True
+        }
+        headers = {
+            'Content-Type': 'application/json'
+        }
+        return web.Response(text=json.dumps(payload), headers=headers)
+
+    async def get_weather(self, request):
+        lon_lat = request.query.get('lonLat')
+        assert lon_lat == '51.322984,-0.724613'
+        payload = {
+            "code": 0,
+            "msg": "Success",
+            "data": {
+                "currWea": {
+                    "desc": "broken clouds",
+                    "currTemp": "20.6",
+                    "windSpeed": "3.9",
+                    "windDirection": "292",
+                    "sunrise": "04:55",
+                    "sunset": "21:19",
+                    "iconUrl": "https://sunsynk-s3.s3.eu-west-2.amazonaws.com/weather/openweather/04d.png",
+                    "tempMinC": "19.7",
+                    "tempMaxC": "21.8"
+                }
+            },
+            "success": True
+        }
+        headers = {
+            'Content-Type': 'application/json'
+        }
+        return web.Response(text=json.dumps(payload), headers=headers)
+
 
 
