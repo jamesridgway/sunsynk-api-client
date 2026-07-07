@@ -1,7 +1,9 @@
 import pytest
 
 from sunsynk.client import SunsynkClient, InvalidCredentialsException
+from sunsynk.weather import Weather
 from tests.mock_api_server import MockApiServer
+
 
 
 @pytest.mark.asyncio
@@ -113,3 +115,44 @@ async def test_get_inverter_realtime_load(aiohttp_client):
     assert load.get_voltage() is None
     assert load.get_current() is None
     assert load.get_power() is None
+
+
+@pytest.mark.asyncio
+async def test_get_plant(aiohttp_client):
+    mock_api_server = MockApiServer(aiohttp_client)
+    client = await mock_api_server.client()
+
+    plant = await client.get_plant(12345)
+
+    assert plant.id == 12345
+    assert plant.name == 'John Smith'
+    assert plant.lon == -0.724613
+    assert plant.lat == 51.322984
+    assert plant.generation_today == 9.00
+    assert plant.generation_total == 5622.30
+    assert plant.pac == 2484
+    assert plant.master_id == 54321
+
+
+@pytest.mark.asyncio
+async def test_get_weather(aiohttp_client):
+    mock_api_server = MockApiServer(aiohttp_client)
+    client = await mock_api_server.client()
+
+    plant = await client.get_plant(12345)
+    lon_lat = f"{plant.lat},{plant.lon}"
+    assert lon_lat == "51.322984,-0.724613"
+
+    weather = await client.get_weather(lon_lat, date="2026-07-07")
+
+    assert isinstance(weather, Weather)
+    assert weather.description == "broken clouds"
+    assert weather.get_current_temp() == 20.6
+    assert weather.get_wind_speed() == 3.9
+    assert weather.get_wind_direction() == 292
+    assert weather.sunrise == "04:55"
+    assert weather.sunset == "21:19"
+    assert weather.icon_url == "https://sunsynk-s3.s3.eu-west-2.amazonaws.com/weather/openweather/04d.png"
+    assert weather.get_temp_min_c() == 19.7
+    assert weather.get_temp_max_c() == 21.8
+
