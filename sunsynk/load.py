@@ -1,8 +1,8 @@
-from sunsynk.resource import Resource
 from sunsynk.vip import Vip
+from sunsynk.vip_resource import VipResource
 
 
-class Load(Resource):
+class Load(VipResource):
     def __init__(self, data):
         self.total_used = data['totalUsed']
         self.daily_used = data['dailyUsed']
@@ -14,18 +14,3 @@ class Load(Resource):
         self.ups_power_l2 = data['upsPowerL2']
         self.ups_power_l3 = data['upsPowerL3']
         self.ups_power_total = data['upsPowerTotal']
-
-    def get_voltage(self) -> float | None:
-        if len(self.vip) == 0:
-            return None
-        return float(self.vip[0].voltage)
-
-    def get_current(self) -> float | None:
-        if len(self.vip) == 0:
-            return None
-        return float(self.vip[0].current)
-
-    def get_power(self) -> float | None:
-        if len(self.vip) == 0:
-            return None
-        return float(self.vip[0].power)

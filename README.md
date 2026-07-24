@@ -31,3 +31,25 @@ An API client library for reading data from the Sunsynk API that is used by the 
         print('Done!')
     
     asyncio.run(main())
+
+
+## Load, Plant Details and Weather
+
+In addition to the inverter realtime data shown above, the client can also read
+the realtime load/UPS metrics, full plant details (including coordinates), and
+the weather for a plant's location:
+
+    async with SunsynkClient(sunsynk_username, sunsynk_password) as client:
+        inverters = await client.get_inverters()
+        load = await client.get_inverter_realtime_load(inverters[0].sn)
+        print(f"Load is drawing {load.get_power()}W ({load.daily_used} kWh used today)")
+
+        # get_plant returns the full plant detail, including lon/lat coordinates
+        plant = await client.get_plant(inverters[0].plant.id)
+
+        # The Sunsynk weather endpoint expects the coordinates as "lat,lon"
+        weather = await client.get_weather(f"{plant.lat},{plant.lon}")
+        print(f"It is currently {weather.get_current_temp()}C and {weather.description}")
+
+`get_weather` defaults to today's date; pass `date="YYYY-MM-DD"` to request a
+specific day.
