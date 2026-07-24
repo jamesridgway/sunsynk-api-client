@@ -5,7 +5,6 @@ from sunsynk.weather import Weather
 from tests.mock_api_server import MockApiServer
 
 
-
 @pytest.mark.asyncio
 async def test_login(aiohttp_client):
     mock_api_server = MockApiServer(aiohttp_client)
@@ -155,4 +154,15 @@ async def test_get_weather(aiohttp_client):
     assert weather.icon_url == "https://sunsynk-s3.s3.eu-west-2.amazonaws.com/weather/openweather/04d.png"
     assert weather.get_temp_min_c() == 19.7
     assert weather.get_temp_max_c() == 21.8
+
+
+def test_weather_missing_current_conditions():
+    weather = Weather({})
+
+    assert weather.description is None
+    assert weather.get_current_temp() is None
+    assert weather.get_wind_speed() is None
+    assert weather.get_wind_direction() is None
+    assert weather.get_temp_min_c() is None
+    assert weather.get_temp_max_c() is None
 

@@ -1,8 +1,8 @@
-from sunsynk.resource import Resource
 from sunsynk.vip import Vip
+from sunsynk.vip_resource import VipResource
 
 
-class Grid(Resource):
+class Grid(VipResource):
     def __init__(self, data):
         self.vip = [Vip(vip_data) for vip_data in data['vip']]
         self.pac = data['pac']
@@ -17,18 +17,3 @@ class Grid(Resource):
         self.total_export = data['etotalTo']
         self.limiter_power_arr = data['limiterPowerArr']
         self.limiter_total_power = data['limiterTotalPower']
-
-    def get_voltage(self) -> float | None:
-        if len(self.vip) == 0:
-            return None
-        return float(self.vip[0].voltage)
-
-    def get_current(self) -> float | None:
-        if len(self.vip) == 0:
-            return None
-        return float(self.vip[0].current)
-
-    def get_power(self) -> float | None:
-        if len(self.vip) == 0:
-            return None
-        return float(self.vip[0].power)

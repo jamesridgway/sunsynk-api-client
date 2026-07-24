@@ -1,4 +1,5 @@
 import base64
+import datetime
 import hashlib
 import time
 
@@ -14,7 +15,6 @@ from sunsynk.load import Load
 from sunsynk.output import Output
 from sunsynk.plant import Plant
 from sunsynk.weather import Weather
-
 
 
 class InvalidCredentialsException(Exception):
@@ -63,12 +63,10 @@ class SunsynkClient:
 
     async def get_weather(self, lon_lat: str, date: str = None, lan: str = 'en') -> Weather:
         if date is None:
-            import datetime
             date = datetime.date.today().isoformat()
         resp = await self.__get(f'api/v1/weather?lan={lan}&date={date}&lonLat={lon_lat}')
         body = await resp.json()
         return Weather(body['data'])
-
 
     async def get_inverters(self) -> list[Inverter]:
         resp = await self.__get('api/v1/inverters?page=1&limit=10&total=0&status=-1&sn=&plantId=&type=-2&softVer=&' \

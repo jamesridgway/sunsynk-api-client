@@ -30,7 +30,6 @@ class MockApiServer:
         self.app.router.add_get('/api/v1/plant/12345', self.get_plant)
         self.app.router.add_get('/api/v1/weather', self.get_weather)
 
-
     async def client(self, username='myuser'):
         client = await self.aiohttp_client(self.app)
         return await SunsynkClient.create(username, 'letmein', base_url=f'http://{client.host}:{client.port}')
@@ -448,6 +447,3 @@ class MockApiServer:
             'Content-Type': 'application/json'
         }
         return web.Response(text=json.dumps(payload), headers=headers)
-
-
-
