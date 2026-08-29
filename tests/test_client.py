@@ -166,3 +166,15 @@ def test_weather_missing_current_conditions():
     assert weather.get_temp_min_c() is None
     assert weather.get_temp_max_c() is None
 
+
+
+@pytest.mark.asyncio
+async def test_get_user(aiohttp_client):
+    mock_api_server = MockApiServer(aiohttp_client)
+    client = await mock_api_server.client()
+
+    user = await client.get_user()
+
+    assert user.id == 281092
+    assert user.email == 'john.smith@example.com'
+    assert user.created_at.year == 2022

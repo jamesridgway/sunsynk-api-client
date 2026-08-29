@@ -23,6 +23,7 @@ from sunsynk.inverter import Inverter
 from sunsynk.load import Load
 from sunsynk.output import Output
 from sunsynk.plant import Plant
+from sunsynk.user import User
 from sunsynk.weather import Weather
 
 __all__ = [
@@ -84,6 +85,11 @@ class SunsynkClient:
         if self._session is not None and self._close_session:
             await self._session.close()
             self._session = None
+
+    async def get_user(self, lan: str = 'en') -> User:
+        """Return the user account that is logged in."""
+        data = await self.__get(f'api/v1/user?lan={lan}')
+        return User(data)
 
     async def get_plants(self) -> list[Plant]:
         data = await self.__get('api/v1/plants?page=1&limit=10&name=&status=')
