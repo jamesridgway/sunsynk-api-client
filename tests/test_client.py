@@ -1,8 +1,14 @@
+import datetime
+
 import pytest
 
+from sunsynk.battery import Battery
 from sunsynk.client import SunsynkClient, InvalidCredentialsException
+from sunsynk.grid import Grid
+from sunsynk.input import Input
+from sunsynk.plant import Plant
 from sunsynk.weather import Weather
-from tests.mock_api_server import MockApiServer
+from tests.mock_api_server import MockApiServer, PagedMockApiServer
 
 
 @pytest.mark.asyncio
@@ -178,3 +184,226 @@ async def test_get_user(aiohttp_client):
     assert user.id == 281092
     assert user.email == 'john.smith@example.com'
     assert user.created_at.year == 2022
+
+
+@pytest.mark.asyncio
+async def test_get_inverter(aiohttp_client):
+    mock_api_server = MockApiServer(aiohttp_client)
+    client = await mock_api_server.client()
+
+    inverter = await client.get_inverter('1029384756')
+
+    assert inverter.sn == '1029384756'
+    assert inverter.rate_power == 5000.0
+    assert inverter.brand == 'Sunsynk'
+    assert inverter.generated_month == 120.5
+    assert inverter.generated_year == 1500.25
+    assert inverter.run_status == 1
+    assert inverter.equip_type == 2
+    assert inverter.version.comm_ver == '1.0'
+    assert inverter.user.id == 281092
+    assert inverter.plant.id == 12345
+    assert inverter.updated_at.year == 2023
+    assert inverter.updated_at.tzinfo is not None
+
+
+@pytest.mark.asyncio
+async def test_get_inverter_flow(aiohttp_client):
+    mock_api_server = MockApiServer(aiohttp_client)
+    client = await mock_api_server.client()
+
+    flow = await client.get_inverter_flow('1029384756')
+
+    assert flow.pv_power == 9.0
+    assert flow.battery_power == -18.0
+    assert flow.battery_power_2 is None
+    assert flow.grid_or_meter_power == 610.0
+    assert flow.load_or_eps_power == 3427.0
+    assert flow.generator_power == 0.0
+    assert flow.soc == 20.0
+    assert flow.to_grid is False
+    assert flow.bat_to is True
+    assert flow.raw['custCode'] == 29
+
+
+@pytest.mark.asyncio
+async def test_get_inverter_temperatures(aiohttp_client):
+    mock_api_server = MockApiServer(aiohttp_client)
+    client = await mock_api_server.client()
+
+    temps = await client.get_inverter_temperatures('1029384756', date='2026-07-07')
+
+    assert temps.get_dc_temp() == 41.3
+    assert temps.get_igbt_temp() == 36.5
+    assert temps.dc_temp.unit == '℃'
+    assert len(temps.dc_temp.records) == 2
+    assert temps.dc_temp.records[0].timestamp.hour == 10
+    assert temps.get_series('DC Temp') is temps.dc_temp
+
+
+@pytest.mark.asyncio
+async def test_get_inverter_output_day(aiohttp_client):
+    mock_api_server = MockApiServer(aiohttp_client)
+    client = await mock_api_server.client()
+
+    data = await client.get_inverter_output_day('1029384756', ['pac', 'dc_temp'], date=datetime.date(2026, 7, 7))
+
+    assert [s.label for s in data.series] == ['DC Temp', 'pac']
+    assert data.get_series('pac').latest_value() == 1200.0
+    assert data.get_series('missing') is None
+    assert mock_api_server.requests[-1][2]['column'] == 'pac,dc_temp'
+
+
+@pytest.mark.asyncio
+async def test_get_inverter_settings(aiohttp_client):
+    mock_api_server = MockApiServer(aiohttp_client)
+    client = await mock_api_server.client()
+
+    settings = await client.get_inverter_settings('1029384756')
+
+    assert settings.sn == '1029384756'
+    assert settings.energy_mode == 1
+    assert settings.is_battery_first() is False
+    assert settings.sys_work_mode == 2
+    assert settings.is_essential_only() is False
+    assert settings.battery_low_cap == 20
+    assert settings.battery_shutdown_cap == 10
+    assert settings.zero_export_power == 20
+    assert settings.solar_sell is True
+    assert settings.peak_and_valley is True
+    assert settings.capacities == [100, 40, 40, 40, 40, 40]
+    assert settings.grid_charge_on == [True, False, False, False, False, False]
+    assert settings.is_grid_charge_enabled() is True
+    assert settings.sell_times[1] == '04:00'
+    assert settings.sell_time_power[0] == 5000
+    assert settings.days_on['monday'] is True
+    assert settings.get('someUnknownSetting') == '42'
+    assert settings.raw['beep'] == '0'
+
+
+@pytest.mark.asyncio
+async def test_set_inverter_settings(aiohttp_client):
+    mock_api_server = MockApiServer(aiohttp_client)
+    client = await mock_api_server.client()
+
+    await client.set_inverter_settings('1029384756', {'cap1': '80', 'time1on': True})
+    assert mock_api_server.settings_writes[-1] == {'cap1': '80', 'time1on': True, 'sn': '1029384756'}
+
+    settings = await client.get_inverter_settings('1029384756')
+    settings.raw['cap1'] = '90'
+    await client.set_inverter_settings('1029384756', settings)
+    assert mock_api_server.settings_writes[-1]['cap1'] == '90'
+    assert mock_api_server.settings_writes[-1]['sn'] == '1029384756'
+
+
+@pytest.mark.asyncio
+async def test_get_plant_realtime(aiohttp_client):
+    mock_api_server = MockApiServer(aiohttp_client)
+    client = await mock_api_server.client()
+
+    realtime = await client.get_plant_realtime(12345)
+
+    assert realtime.pac == 2484.0
+    assert realtime.efficiency == 0.75
+    assert realtime.generation_today == 9.0
+    assert realtime.generation_month == 120.5
+    assert realtime.generation_year == 1500.25
+    assert realtime.generation_total == 5622.3
+    assert realtime.income == 12.34
+    assert realtime.currency.code == 'GBP'
+    assert realtime.updated_at.year == 2023
+
+
+@pytest.mark.asyncio
+async def test_get_plant_energy(aiohttp_client):
+    mock_api_server = MockApiServer(aiohttp_client)
+    client = await mock_api_server.client()
+
+    day = await client.get_plant_energy_day(12345, date='2026-07-07')
+    assert day.get_series('PV').latest_value() == 200.0
+    assert day.get_series('Load').records[0].value == 300.0
+
+    month = await client.get_plant_energy_month(12345, date=datetime.date(2026, 7, 1))
+    assert month.get_series('PV').unit == 'kWh'
+    assert [r.value for r in month.get_series('PV').records] == [10.5, 12.0]
+
+
+@pytest.mark.asyncio
+async def test_set_plant_income(aiohttp_client):
+    mock_api_server = MockApiServer(aiohttp_client)
+    client = await mock_api_server.client()
+
+    await client.set_plant_income(12345, {'currency': 'GBP', 'price': 0.25})
+    assert mock_api_server.income_writes == [{'currency': 'GBP', 'price': 0.25}]
+
+
+@pytest.mark.asyncio
+async def test_pagination_fetches_all_pages(aiohttp_client):
+    mock_api_server = PagedMockApiServer(aiohttp_client)
+    client = await mock_api_server.client()
+
+    inverters = await client.get_inverters()
+    assert len(inverters) == 25
+    assert inverters[0].sn == 'SN000'
+    assert inverters[-1].sn == 'SN024'
+    inverter_pages = [q['page'] for _, path, q in mock_api_server.requests if path == '/api/v1/inverters']
+    assert inverter_pages == ['1', '2', '3']
+
+    plants = await client.get_plants()
+    assert len(plants) == 12
+    assert plants[-1].id == 11
+
+
+@pytest.mark.asyncio
+async def test_pagination_single_page(aiohttp_client):
+    mock_api_server = PagedMockApiServer(aiohttp_client)
+    client = await mock_api_server.client()
+
+    inverters = await client.get_inverters(page=2, limit=10)
+    assert [i.sn for i in inverters] == [f'SN{i:03d}' for i in range(10, 20)]
+
+    plants = await client.get_plants(page=1, limit=5)
+    assert len(plants) == 5
+
+
+@pytest.mark.asyncio
+async def test_battery_extra_fields(aiohttp_client):
+    mock_api_server = MockApiServer(aiohttp_client)
+    client = await mock_api_server.client()
+
+    battery = await client.get_inverter_realtime_battery('1029384756')
+    assert battery.get_soc() == battery.soc
+    assert battery.soc_2 is None
+    assert mock_api_server.requests[-1][2] == {'sn': '1029384756', 'lan': 'en'}
+
+
+def test_battery_prefers_bms_soc():
+    battery = Battery({'soc': '19', 'bmsSoc': 21, 'bmsVolt': '53.1'})
+    assert battery.get_soc() == 21.0
+    assert battery.bms_voltage == 53.1
+
+
+def test_grid_relay_status():
+    assert Grid({'acRealyStatus': 1}).is_connected() is True
+    assert Grid({'acRealyStatus': 0}).is_connected() is False
+    assert Grid({}).is_connected() is None
+
+
+def test_input_power_falls_back_to_pac():
+    assert Input({'pac': 1234}).get_power() == 1234.0
+    assert Input({'pac': 1234, 'mpptIV': [{'ppv': '100'}, {'ppv': '50'}]}).get_power() == 150.0
+    assert Input({}).get_power() == 0.0
+
+
+def test_plant_numeric_conversion_and_missing_fields():
+    plant = Plant({'id': '12345', 'name': 'x', 'pac': '2484', 'lon': '-0.72', 'lat': '51.3',
+                   'updateAt': '2023-01-07T16:50:17.123+01:00'})
+    assert plant.id == 12345
+    assert plant.pac == 2484.0
+    assert plant.lon == -0.72
+    assert plant.updated_at.utcoffset().total_seconds() == 3600
+
+    empty = Plant({})
+    assert empty.id is None
+    assert empty.name is None
+    assert empty.updated_at is None

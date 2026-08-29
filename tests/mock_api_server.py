@@ -30,6 +30,19 @@ class MockApiServer:
         self.app.router.add_get('/api/v1/plant/12345', self.get_plant)
         self.app.router.add_get('/api/v1/weather', self.get_weather)
         self.app.router.add_get('/api/v1/user', self.get_user)
+        self.app.router.add_get('/api/v1/inverter/1029384756', self.get_inverter)
+        self.app.router.add_get('/api/v1/inverter/1029384756/flow', self.get_inverter_flow)
+        self.app.router.add_get('/api/v1/inverter/1029384756/output/day', self.get_inverter_output_day)
+        self.app.router.add_get('/api/v1/common/setting/1029384756/read', self.get_inverter_settings)
+        self.app.router.add_post('/api/v1/common/setting/1029384756/set', self.set_inverter_settings)
+        self.app.router.add_get('/api/v1/plant/12345/realtime', self.get_plant_realtime)
+        self.app.router.add_get('/api/v1/plant/energy/12345/day', self.get_plant_energy_day)
+        self.app.router.add_get('/api/v1/plant/energy/12345/month', self.get_plant_energy_month)
+        self.app.router.add_post('/api/v1/plant/12345/income', self.set_plant_income)
+        self.requests = []
+        self.settings_writes = []
+        self.income_writes = []
+        self.app.middlewares.append(self._record_requests)
 
     async def client(self, username='myuser'):
         client = await self.aiohttp_client(self.app)
@@ -57,7 +70,10 @@ class MockApiServer:
             'success': success,
             'data': {
                 'access_token': 'AT123',
-                'refresh_token': 'RT456'
+                'refresh_token': 'RT456',
+                'expires_in': 3600,
+                'token_type': 'bearer',
+                'scope': 'all'
             }
         }
         headers = {
@@ -471,6 +487,185 @@ class MockApiServer:
             'Content-Type': 'application/json'
         }
         return web.Response(text=json.dumps(payload), headers=headers)
+
+    @web.middleware
+    async def _record_requests(self, request, handler):
+        self.requests.append((request.method, request.path, dict(request.query)))
+        return await handler(request)
+
+    @staticmethod
+    def _json(payload):
+        return web.Response(text=json.dumps(payload), headers={'Content-Type': 'application/json'})
+
+    async def get_inverter(self, request):
+        return self._json({
+            "code": 0, "msg": "Success", "success": True,
+            "data": {
+                "id": 1, "sn": "1029384756", "alias": "My Inverter", "gsn": "E0192837465",
+                "status": 1, "runStatus": 1, "type": 2, "commType": 1, "commTypeName": "RS485",
+                "custCode": 29, "thumbUrl": "", "opened": 1,
+                "version": {"masterVer": "1234", "softVer": "1.2.3.4", "hardVer": "1.0",
+                            "hmiVer": "E.1.2.3", "bmsVer": "1.0", "commVer": "1.0"},
+                "plant": {"id": 12345, "name": "John Smith", "type": 2, "master": None,
+                          "installer": None, "email": "john.smith@example.com", "phone": None},
+                "pac": 2484, "etoday": 9.0, "emonth": 120.5, "eyear": 1500.25, "etotal": 5622.3,
+                "updateAt": "2023-01-07T16:50:17Z", "ratePower": 5000.0, "brand": "Sunsynk",
+                "address": "Somewhere", "model": "SUNSYNK-5K-SG04LP1", "protocolIdentifier": "2",
+                "equipType": 2, "equipMode": 2, "sunsynkEquip": True,
+                "user": {"id": 281092, "nickname": "john", "mobile": None, "email": "john.smith@example.com"},
+            },
+        })
+
+    async def get_inverter_flow(self, request):
+        return self._json({
+            "code": 0, "msg": "Success", "success": True,
+            "data": {
+                "custCode": 29, "meterCode": 0, "protocolIdentifier": "2",
+                "pvPower": 9, "battPower": -18, "battPower2": None, "gridOrMeterPower": 610,
+                "loadOrEpsPower": 3427, "genPower": 0, "minPower": 0, "soc": 20.0,
+                "heatPumpPower": None, "smartLoadPower": None, "upsLoadPower": 5, "homeLoadPower": 3422,
+                "pvTo": True, "toLoad": True, "toGrid": False, "toBat": False, "batTo": True,
+                "gridTo": True, "genTo": False, "minTo": False, "existsGen": False, "existsMin": False,
+                "genOn": False, "microOn": False, "existsMeter": False, "bmsCommFaultFlag": False,
+                "existThinkPower": False,
+            },
+        })
+
+    async def get_inverter_output_day(self, request):
+        assert request.query.get('date') == '2026-07-07'
+        columns = request.query.get('column', '').split(',')
+        infos = []
+        if 'dc_temp' in columns:
+            infos.append({"unit": "℃", "records": [
+                {"time": "2026-07-07 10:00:00", "value": "40.1", "updateTime": None},
+                {"time": "2026-07-07 10:05:00", "value": "41.3", "updateTime": None}],
+                "id": None, "label": "DC Temp"})
+        if 'igbt_temp' in columns:
+            infos.append({"unit": "℃", "records": [
+                {"time": "2026-07-07 10:00:00", "value": "35.0", "updateTime": None},
+                {"time": "2026-07-07 10:05:00", "value": "36.5", "updateTime": None}],
+                "id": None, "label": "AC Temp"})
+        if 'pac' in columns:
+            infos.append({"unit": "W", "records": [
+                {"time": "2026-07-07 10:00:00", "value": "1200", "updateTime": None}],
+                "id": None, "label": "pac"})
+        return self._json({"code": 0, "msg": "Success", "success": True, "data": {"infos": infos}})
+
+    async def get_inverter_settings(self, request):
+        return self._json({
+            "code": 0, "msg": "Success", "success": True,
+            "data": {
+                "sn": "1029384756", "energyMode": "1", "sysWorkMode": "2", "workState": "1",
+                "batteryLowCap": "20", "batteryShutdownCap": "10", "batteryRestartCap": "15",
+                "batteryCap": "100", "batteryMaxCurrentCharge": "80", "batteryMaxCurrentDischarge": "80",
+                "zeroExportPower": "20", "solarSell": "1", "solarMaxSellPower": "5000",
+                "peakAndVallery": 1, "genChargeOn": "0", "gridPeakShaving": "0", "gridPeakPower": "8000",
+                "battType": "1", "lithiumMode": "0", "safetyType": "2", "inverterType": "5",
+                "sellTime1": "00:00", "sellTime2": "04:00", "sellTime3": "08:00",
+                "sellTime4": "12:00", "sellTime5": "16:00", "sellTime6": "20:00",
+                "sellTime1Pac": "5000", "sellTime2Pac": "5000", "sellTime3Pac": "5000",
+                "sellTime4Pac": "5000", "sellTime5Pac": "5000", "sellTime6Pac": "5000",
+                "sellTime1Volt": "49", "sellTime2Volt": "49", "sellTime3Volt": "49",
+                "sellTime4Volt": "49", "sellTime5Volt": "49", "sellTime6Volt": "49",
+                "cap1": "100", "cap2": "40", "cap3": "40", "cap4": "40", "cap5": "40", "cap6": "40",
+                "time1on": True, "time2on": False, "time3on": "false", "time4on": "false",
+                "time5on": "false", "time6on": "false",
+                "genTime1on": False, "genTime2on": False, "genTime3on": False,
+                "genTime4on": False, "genTime5on": False, "genTime6on": False,
+                "mondayOn": True, "tuesdayOn": True, "wednesdayOn": True, "thursdayOn": True,
+                "fridayOn": True, "saturdayOn": True, "sundayOn": True,
+                "beep": "0", "someUnknownSetting": "42",
+            },
+        })
+
+    async def set_inverter_settings(self, request):
+        body = await request.json()
+        self.settings_writes.append(body)
+        return self._json({"code": 0, "msg": "Success", "success": True, "data": None})
+
+    async def get_plant_realtime(self, request):
+        assert request.query.get('id') == '12345'
+        return self._json({
+            "code": 0, "msg": "Success", "success": True,
+            "data": {
+                "pac": 2484, "efficiency": 0.75, "etoday": 9.0, "emonth": 120.5, "eyear": 1500.25,
+                "etotal": 5622.3, "totalPower": 3.68, "currency": {"id": 1, "code": "GBP", "text": "GBP"},
+                "invest": 0.0, "income": 12.34, "updateAt": "2023-01-07T16:50:17Z",
+            },
+        })
+
+    async def get_plant_energy_day(self, request):
+        assert request.query.get('date') == '2026-07-07'
+        return self._json({
+            "code": 0, "msg": "Success", "success": True,
+            "data": {"infos": [
+                {"unit": "W", "label": "PV", "records": [
+                    {"time": "2026-07-07 10:00:00", "value": "100"},
+                    {"time": "2026-07-07 10:05:00", "value": "200"}]},
+                {"unit": "W", "label": "Load", "records": [
+                    {"time": "2026-07-07 10:00:00", "value": "300"},
+                    {"time": "2026-07-07 10:05:00", "value": "400"}]},
+            ]},
+        })
+
+    async def get_plant_energy_month(self, request):
+        assert request.query.get('date') == '2026-07'
+        return self._json({
+            "code": 0, "msg": "Success", "success": True,
+            "data": {"infos": [
+                {"unit": "kWh", "label": "PV", "records": [
+                    {"time": "2026-07-01", "value": "10.5"},
+                    {"time": "2026-07-02", "value": "12.0"}]},
+            ]},
+        })
+
+    async def set_plant_income(self, request):
+        body = await request.json()
+        self.income_writes.append(body)
+        return self._json({"code": 0, "msg": "Success", "success": True, "data": None})
+
+
+class PagedMockApiServer(MockApiServer):
+    """Mock server that reports 25 inverters and 12 plants across several pages."""
+
+    INVERTER_TOTAL = 25
+    PLANT_TOTAL = 12
+
+    async def get_inverters(self, request):
+        page = int(request.query['page'])
+        limit = int(request.query['limit'])
+        start = (page - 1) * limit
+        infos = [{"sn": f"SN{i:03d}", "gsn": f"G{i:03d}", "plant": {"id": 12345, "name": "John Smith"}}
+                 for i in range(start, min(start + limit, self.INVERTER_TOTAL))]
+        return self._json({"code": 0, "msg": "Success", "success": True,
+                           "data": {"pageSize": limit, "pageNumber": page,
+                                    "total": self.INVERTER_TOTAL, "infos": infos}})
+
+    async def get_plants(self, request):
+        page = int(request.query['page'])
+        limit = int(request.query['limit'])
+        start = (page - 1) * limit
+        infos = [{"id": i, "name": f"Plant {i}"} for i in range(start, min(start + limit, self.PLANT_TOTAL))]
+        return self._json({"code": 0, "msg": "Success", "success": True,
+                           "data": {"pageSize": limit, "pageNumber": page,
+                                    "total": self.PLANT_TOTAL, "infos": infos}})
+
+
+class ExpiringTokenMockApiServer(MockApiServer):
+    """Mock server whose tokens expire immediately, so every request needs a new login."""
+
+    def __init__(self, aiohttp_client):
+        super().__init__(aiohttp_client)
+        self.login_count = 0
+
+    async def login(self, request):
+        self.login_count += 1
+        response = await super().login(request)
+        payload = json.loads(response.text)
+        if payload.get('success'):
+            payload['data']['access_token'] = f'AT{self.login_count}'
+            payload['data']['expires_in'] = 1
+        return self._json(payload)
 
 
 class FlakyMockApiServer(MockApiServer):

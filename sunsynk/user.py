@@ -1,7 +1,6 @@
-import datetime
 from typing import Any
 
-from sunsynk.resource import Resource, to_int
+from sunsynk.resource import Resource, to_datetime, to_int
 
 
 class User(Resource):
@@ -16,5 +15,4 @@ class User(Resource):
         self.temp_unit = data.get('tempUnit')
         self.company = data.get('company')
         self.user_src = data.get('userSrc')
-        created_at = data.get('createAt')
-        self.created_at = datetime.datetime.strptime(created_at, "%Y-%m-%dT%H:%M:%SZ") if created_at else None
+        self.created_at = to_datetime(data.get('createAt'))

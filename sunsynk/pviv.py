@@ -1,7 +1,6 @@
-import datetime
 from typing import Any
 
-from sunsynk.resource import Resource, to_float, to_int
+from sunsynk.resource import Resource, to_datetime, to_float, to_int
 
 
 class PvIv(Resource):
@@ -15,5 +14,18 @@ class PvIv(Resource):
         self.ppv = to_float(data.get('ppv'))
         self.today_pv = to_float(data.get('todayPv'))
         self.sn = data.get('sn')
-        time = data.get('time')
-        self.time = datetime.datetime.strptime(time, "%Y-%m-%d %H:%M:%S") if time else None
+        self.time = to_datetime(data.get('time'))
+
+
+class MpptIv(Resource):
+    """Realtime data for one MPPT tracker."""
+
+    def __init__(self, data: dict[str, Any]):
+        self.id = data.get('id')
+        self.mppt_no = to_int(data.get('mpptNo', data.get('pvNo')))
+        self.vpv = to_float(data.get('vpv'))
+        self.ipv = to_float(data.get('ipv'))
+        self.ppv = to_float(data.get('ppv'))
+        self.today_pv = to_float(data.get('todayPv'))
+        self.sn = data.get('sn')
+        self.time = to_datetime(data.get('time'))

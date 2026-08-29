@@ -4,16 +4,19 @@ import pytest
 from sunsynk.client import SunsynkClient
 from sunsynk.exceptions import (
     InvalidCredentialsException,
+    SunsynkApiError,
     SunsynkAuthenticationError,
     SunsynkConnectionError,
     SunsynkError,
 )
-from tests.mock_api_server import FlakyMockApiServer, MockApiServer
+from tests.mock_api_server import ExpiringTokenMockApiServer, FlakyMockApiServer, MockApiServer
 
 
 def test_exception_hierarchy():
     assert issubclass(SunsynkAuthenticationError, SunsynkError)
     assert issubclass(SunsynkConnectionError, SunsynkError)
+    assert issubclass(SunsynkApiError, SunsynkError)
+    assert not issubclass(SunsynkApiError, SunsynkConnectionError)
     assert InvalidCredentialsException is SunsynkAuthenticationError
 
 
@@ -71,11 +74,41 @@ async def test_unauthorized_after_relogin_raises(aiohttp_client):
 
 
 @pytest.mark.asyncio
-async def test_unsuccessful_body_raises_connection_error(aiohttp_client):
+async def test_unsuccessful_body_raises_api_error(aiohttp_client):
     mock_api_server = FlakyMockApiServer(aiohttp_client)
     client = await mock_api_server.client()
-    with pytest.raises(SunsynkConnectionError, match='Something went wrong'):
+    with pytest.raises(SunsynkApiError, match='Something went wrong') as exc_info:
         await client._SunsynkClient__get('api/v1/error')  # pylint: disable=protected-access
+    assert exc_info.value.code == 500
+
+
+@pytest.mark.asyncio
+async def test_login_error_includes_api_message(aiohttp_client):
+    mock_api_server = MockApiServer(aiohttp_client)
+    with pytest.raises(SunsynkAuthenticationError, match='Invalid username or password'):
+        await mock_api_server.client(username='invalid')
+
+
+@pytest.mark.asyncio
+async def test_token_expiry_is_tracked(aiohttp_client):
+    mock_api_server = MockApiServer(aiohttp_client)
+    client = await mock_api_server.client()
+    assert client.token_expires_at is not None
+    assert client.token_is_valid()
+    client.token_expires_at = 0
+    assert not client.token_is_valid()
+
+
+@pytest.mark.asyncio
+async def test_relogin_before_token_expires(aiohttp_client):
+    mock_api_server = ExpiringTokenMockApiServer(aiohttp_client)
+    client = await mock_api_server.client()
+    assert mock_api_server.login_count == 1
+    await client.get_inverters()
+    assert mock_api_server.login_count == 2
+    assert client.access_token == 'AT2'
+    await client.get_inverters()
+    assert mock_api_server.login_count == 3
 
 
 @pytest.mark.asyncio
