@@ -58,6 +58,15 @@ All errors raised by the client subclass `sunsynk.exceptions.SunsynkError`:
 Numeric values in the API responses are converted to `float` or `int`. Values
 that are missing are `None`.
 
+## User
+
+`get_user` returns the account that is logged in. `user.id` is a stable
+identifier for the account:
+
+    async with SunsynkClient(sunsynk_username, sunsynk_password) as client:
+        user = await client.get_user()
+        print(f"Logged in as {user.email} (id {user.id})")
+
 ## Load, Plant Details and Weather
 
 In addition to the inverter realtime data shown above, the client can also read

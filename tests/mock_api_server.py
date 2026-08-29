@@ -29,6 +29,7 @@ class MockApiServer:
         self.app.router.add_get('/api/v1/inverter/load/1029384756/realtime', self.get_inverter_realtime_load)
         self.app.router.add_get('/api/v1/plant/12345', self.get_plant)
         self.app.router.add_get('/api/v1/weather', self.get_weather)
+        self.app.router.add_get('/api/v1/user', self.get_user)
 
     async def client(self, username='myuser'):
         client = await self.aiohttp_client(self.app)
@@ -421,6 +422,29 @@ class MockApiServer:
             'Content-Type': 'application/json'
         }
         return web.Response(text=json.dumps(payload), headers=headers)
+
+    async def get_user(self, request):
+        assert request.query.get('lan') == 'en'
+        payload = {
+            "code": 0,
+            "msg": "Success",
+            "data": {
+                "id": 281092,
+                "nickname": "john.smith@example.com",
+                "avatar": "https://sunsynk-s3.s3.eu-west-2.amazonaws.com/avatar/20210126155052363929.png",
+                "gender": 1,
+                "mobile": None,
+                "createAt": "2022-10-03T15:39:04Z",
+                "type": None,
+                "tempUnit": "\u2103",
+                "company": None,
+                "userSrc": "sunsynk",
+                "email": "john.smith@example.com",
+                "sex": 1
+            },
+            "success": True
+        }
+        return web.Response(text=json.dumps(payload), headers={'Content-Type': 'application/json'})
 
     async def get_weather(self, request):
         lon_lat = request.query.get('lonLat')
