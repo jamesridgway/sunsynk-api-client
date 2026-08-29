@@ -124,6 +124,15 @@ identifier for the account:
         user = await client.get_user()
         print(f"Logged in as {user.email} (id {user.id})")
 
+## Battery Presence
+
+The API does not say if a battery is connected. `Battery.is_present` returns
+`True` when the API reports a battery count or a DC voltage above zero:
+
+    battery = await client.get_inverter_realtime_battery(inverter.sn)
+    if battery.is_present:
+        print(f"Battery at {battery.soc}%")
+
 ## Load, Plant Details and Weather
 
 In addition to the inverter realtime data shown above, the client can also read

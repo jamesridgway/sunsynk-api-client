@@ -17,6 +17,7 @@ class MockApiServer:
             format=serialization.PublicFormat.SubjectPublicKeyInfo,
         )
         self._public_key_b64 = base64.b64encode(public_der).decode()
+        self.battery_connected = True
         self.app = web.Application()
         self.app.router.add_get('/anonymous/publicKey', self.get_public_key)
         self.app.router.add_post('/oauth/token/new', self.login)
@@ -206,6 +207,8 @@ class MockApiServer:
         return web.Response(text=json.dumps(payload), headers=headers)
 
     async def get_inverter_realtime_battery(self, request):
+        if not self.battery_connected:
+            return await self.get_inverter_realtime_battery_absent(request)
         payload = {
             'code': 0,
             'msg': 'Success',
@@ -265,6 +268,54 @@ class MockApiServer:
             'Content-Type': 'application/json'
         }
         return web.Response(text=json.dumps(payload), headers=headers)
+
+    async def get_inverter_realtime_battery_absent(self, request):
+        payload = {
+            'code': 0,
+            'msg': 'Success',
+            'data': {
+                'time': None,
+                'etodayChg': '0.0',
+                'etodayDischg': '0.0',
+                'emonthChg': '0.0',
+                'emonthDischg': '0.0',
+                'eyearChg': '0.0',
+                'eyearDischg': '0.0',
+                'etotalChg': '0.0',
+                'etotalDischg': '0.0',
+                'type': 0,
+                'power': 0,
+                'capacity': '0.0',
+                'correctCap': 0,
+                'current': '0.0',
+                'voltage': '0.0',
+                'temp': '0.0',
+                'soc': '0.0',
+                'chargeVolt': 0.0,
+                'dischargeVolt': 0.0,
+                'chargeCurrentLimit': 0.0,
+                'dischargeCurrentLimit': 0.0,
+                'maxChargeCurrentLimit': 0.0,
+                'maxDischargeCurrentLimit': 0.0,
+                'status': 0,
+                'batterySoc1': None,
+                'batteryCurrent1': None,
+                'batteryVolt1': None,
+                'batteryPower1': None,
+                'batteryTemp1': None,
+                'batteryStatus2': None,
+                'batterySoc2': None,
+                'batteryCurrent2': None,
+                'batteryVolt2': None,
+                'batteryPower2': None,
+                'batteryTemp2': None,
+                'numberOfBatteries': None,
+                'batt1Factory': None,
+                'batt2Factory': None
+            },
+            'success': True
+        }
+        return web.Response(text=json.dumps(payload), headers={'Content-Type': 'application/json'})
 
     async def get_inverter_realtime_input(self, request):
         payload = {
