@@ -5,6 +5,10 @@ An API client library for reading data from the Sunsynk API that is used by the 
 [PowerView](https://pv.inteless.com/) portal.
 
 
+## Install
+
+    pip install sunsynk-api-client
+
 ## Example Usage
 
     import asyncio

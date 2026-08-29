@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sunsynk-api-client"
+version = "1.2.1"
+description = "API client for interacting with SunSynk APIs."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "James Ridgway" }]
+requires-python = ">=3.13"
+dependencies = [
+    "aiohttp>=3.9",
+    "cryptography>=41",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Framework :: AsyncIO",
+]
+
+[project.urls]
+Homepage = "https://github.com/jamesridgway/sunsynk-api-client"
+Changelog = "https://github.com/jamesridgway/sunsynk-api-client/releases"
+
+[tool.setuptools.packages.find]
+include = ["sunsynk*"]
+
+[tool.setuptools.package-data]
+sunsynk = ["py.typed"]
