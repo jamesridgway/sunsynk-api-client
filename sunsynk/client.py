@@ -155,8 +155,7 @@ class SunsynkClient:
         """Perform an authenticated GET and return the ``data`` of the response body."""
         if self.access_token is None:
             await self.login()
-        body = await self.__request('GET', path, headers=self.__headers(),
-                                    allow_unauthorized=attempts == 1)
+        body = await self.__request('GET', path, allow_unauthorized=attempts == 1)
         if body is None:
             # The token expired. Log in again and retry once.
             await self.login()
@@ -167,19 +166,16 @@ class SunsynkClient:
             )
         return body['data']
 
-    async def __request(self, method: str, path: str, *, headers: dict[str, str] | None = None,
-                        json: Any = None, allow_unauthorized: bool = False) -> Any:
+    async def __request(self, method: str, path: str, *, json: Any = None,
+                        allow_unauthorized: bool = False) -> Any:
         """Perform a request and return the JSON body.
 
         Returns None for a 401 response when ``allow_unauthorized`` is set, so
         the caller can log in again and retry.
         """
-        request_headers = {"Content-Type": "application/json"}
-        if headers:
-            request_headers.update(headers)
         try:
             async with self.session.request(
-                method, self.__url(path), headers=request_headers, json=json, timeout=DEFAULT_TIMEOUT
+                method, self.__url(path), headers=self.__headers(), json=json, timeout=DEFAULT_TIMEOUT
             ) as resp:
                 if resp.status == 401:
                     if allow_unauthorized:
@@ -198,7 +194,7 @@ class SunsynkClient:
             raise SunsynkConnectionError('Sunsynk API returned a response that is not JSON') from err
 
     def __headers(self) -> dict[str, str]:
-        headers = {}
+        headers = {"Content-Type": "application/json"}
         if self.access_token:
             headers['Authorization'] = f"Bearer {self.access_token}"
         return headers
