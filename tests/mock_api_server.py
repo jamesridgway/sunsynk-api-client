@@ -447,3 +447,35 @@ class MockApiServer:
             'Content-Type': 'application/json'
         }
         return web.Response(text=json.dumps(payload), headers=headers)
+
+
+class FlakyMockApiServer(MockApiServer):
+    """Mock server that rejects the first authenticated request with HTTP 401."""
+
+    def __init__(self, aiohttp_client):
+        super().__init__(aiohttp_client)
+        self.login_count = 0
+        self.unauthorized_responses = 1
+        self.app.router.add_get('/api/v1/error', self.get_error)
+        self.app.router.add_get('/api/v1/server-error', self.get_server_error)
+        self.app.router.add_get('/api/v1/not-json', self.get_not_json)
+
+    async def login(self, request):
+        self.login_count += 1
+        return await super().login(request)
+
+    async def get_inverters(self, request):
+        if self.unauthorized_responses > 0:
+            self.unauthorized_responses -= 1
+            return web.Response(status=401)
+        return await super().get_inverters(request)
+
+    async def get_error(self, request):
+        payload = {'code': 500, 'msg': 'Something went wrong', 'success': False}
+        return web.Response(text=json.dumps(payload), headers={'Content-Type': 'application/json'})
+
+    async def get_server_error(self, request):
+        return web.Response(status=500)
+
+    async def get_not_json(self, request):
+        return web.Response(text='<html></html>', headers={'Content-Type': 'text/html'})

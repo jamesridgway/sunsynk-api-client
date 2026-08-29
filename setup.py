@@ -17,6 +17,15 @@ setup(
     author='James Ridgway',
     url='https://github.com/jamesridgway/sunsynk-api-client',
     license='MIT',
-    packages=find_packages(),
-    install_requires=install_reqs
+    packages=find_packages(exclude=['tests', 'tests.*']),
+    package_data={'sunsynk': ['py.typed']},
+    python_requires='>=3.13',
+    install_requires=install_reqs,
+    classifiers=[
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.13',
+        'Programming Language :: Python :: 3.14',
+        'Framework :: AsyncIO',
+    ],
 )

@@ -33,6 +33,27 @@ An API client library for reading data from the Sunsynk API that is used by the 
     asyncio.run(main())
 
 
+## Use With an Existing aiohttp Session
+
+Pass a `session` to share an existing `aiohttp.ClientSession`. The client does
+not close a shared session:
+
+    async with aiohttp.ClientSession() as session:
+        client = SunsynkClient(sunsynk_username, sunsynk_password, session=session)
+        await client.login()
+        inverters = await client.get_inverters()
+
+## Errors
+
+All errors raised by the client subclass `sunsynk.exceptions.SunsynkError`:
+
+* `SunsynkAuthenticationError` - the username or password is not correct.
+* `SunsynkConnectionError` - the API could not be reached, timed out, or
+  returned an unexpected response.
+
+Numeric values in the API responses are converted to `float` or `int`. Values
+that are missing are `None`.
+
 ## Load, Plant Details and Weather
 
 In addition to the inverter realtime data shown above, the client can also read

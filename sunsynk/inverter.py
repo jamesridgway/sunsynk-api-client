@@ -1,10 +1,11 @@
 import datetime
+from typing import Any
 
-from sunsynk.resource import Resource
+from sunsynk.resource import Resource, to_float, to_int
 
 
 class InverterVersion(Resource):
-    def __init__(self, data):
+    def __init__(self, data: dict[str, Any]):
         self.master_ver = data.get('masterVer')
         self.soft_ver = data.get('softVer')
         self.hard_ver = data.get('hardVer')
@@ -13,7 +14,7 @@ class InverterVersion(Resource):
 
 
 class PlantSummary(Resource):
-    def __init__(self, data):
+    def __init__(self, data: dict[str, Any]):
         self.id = data.get('id')
         self.name = data.get('name')
         self.type = data.get('type')
@@ -24,30 +25,30 @@ class PlantSummary(Resource):
 
 
 class GatewayInfo(Resource):
-    def __init__(self, data):
+    def __init__(self, data: dict[str, Any]):
         self.gsn = data.get('gsn')
         self.status = data.get('status')
 
 
 class Inverter(Resource):
-    def __init__(self, data):
-        self.sn = data.get('sn')
+    def __init__(self, data: dict[str, Any]):
+        self.sn: str = data.get('sn')
         self.alias = data.get('alias')
         self.gsn = data.get('gsn')
-        self.status = data.get('status')
-        self.type = data.get('type')
+        self.status = to_int(data.get('status'))
+        self.type = to_int(data.get('type'))
         self.comm_type_name = data.get('commTypeName')
         self.cust_code = data.get('custCode')
-        self.version = InverterVersion(data.get('version')) if 'version' in data.keys() else None
+        self.version = InverterVersion(data['version']) if data.get('version') else None
         self.model = data.get('model')
         self.equip_mode = data.get('equipMode')
-        self.pac = data.get('pac')
-        self.generated_today = data.get('etoday')
-        self.generated_total = data.get('etotal')
-        self.updated_at = datetime.datetime\
-            .strptime(data.get('updateAt'), "%Y-%m-%dT%H:%M:%SZ") if 'updateAt' in data.keys() else None
+        self.pac = to_float(data.get('pac'))
+        self.generated_today = to_float(data.get('etoday'))
+        self.generated_total = to_float(data.get('etotal'))
+        updated_at = data.get('updateAt')
+        self.updated_at = datetime.datetime.strptime(updated_at, "%Y-%m-%dT%H:%M:%SZ") if updated_at else None
         self.opened = data.get('opened')
-        self.plant = PlantSummary(data.get('plant')) if 'plant' in data.keys() else None
-        self.gateway = GatewayInfo(data.get('gatewayVO')) if 'gatewayVO' in data.keys() else None
+        self.plant = PlantSummary(data['plant']) if data.get('plant') else None
+        self.gateway = GatewayInfo(data['gatewayVO']) if data.get('gatewayVO') else None
         self.sunsynk_equip = data.get('sunsynkEquip')
         self.protocol_identifier = data.get('protocolIdentifier')
