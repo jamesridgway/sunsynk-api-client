@@ -407,3 +407,24 @@ def test_plant_numeric_conversion_and_missing_fields():
     assert empty.id is None
     assert empty.name is None
     assert empty.updated_at is None
+
+
+@pytest.mark.asyncio
+async def test_battery_presence(aiohttp_client):
+    mock_api_server = MockApiServer(aiohttp_client)
+    client = await mock_api_server.client()
+
+    battery = await client.get_inverter_realtime_battery('1029384756')
+    assert battery.is_present is True
+
+    mock_api_server.battery_connected = False
+    battery = await client.get_inverter_realtime_battery('1029384756')
+    assert battery.is_present is False
+    assert battery.voltage == 0.0
+
+
+def test_battery_presence_from_count():
+    assert Battery({'batteryNum': 2}).is_present is True
+    assert Battery({'batteryNum': 2}).number_of_batteries == 2
+    assert Battery({'numberOfBatteries': 0, 'voltage': None}).is_present is False
+    assert Battery({'voltage': '0.0', 'bmsVolt': '53.1'}).is_present is True

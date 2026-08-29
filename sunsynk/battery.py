@@ -62,9 +62,21 @@ class Battery(Resource):
         self.battery_volt_2 = to_float(data.get('batteryVolt2'))
         self.battery_power_2 = to_float(data.get('batteryPower2'))
         self.battery_temp_2 = to_float(data.get('batteryTemp2'))
-        self.number_of_batteries = to_int(data.get('numberOfBatteries'))
+        self.number_of_batteries = to_int(data.get('numberOfBatteries', data.get('batteryNum')))
         self.batt_1_factory = data.get('batt1Factory')
         self.batt_2_factory = data.get('batt2Factory')
+
+    @property
+    def is_present(self) -> bool:
+        """Return True when a battery is connected to the inverter.
+
+        The API does not report this directly. A connected battery always
+        reports a DC voltage. An inverter without a battery reports a voltage
+        of 0 or no voltage at all.
+        """
+        if self.number_of_batteries:
+            return True
+        return any(v is not None and v > 0 for v in (self.voltage, self.bms_voltage))
 
     def get_voltage(self) -> float | None:
         return self.voltage
