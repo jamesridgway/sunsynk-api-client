@@ -1,15 +1,19 @@
 import datetime
+from typing import Any
 
-from sunsynk.resource import Resource
+from sunsynk.resource import Resource, to_float, to_int
 
 
 class PvIv(Resource):
-    def __init__(self, data):
-        self.id = data['id']
-        self.pv_no = data['pvNo']
-        self.vpv = data['vpv']
-        self.ipv = data['ipv']
-        self.ppv = data['ppv']
-        self.today_pv = data['todayPv']
-        self.sn = data['sn']
-        self.time = datetime.datetime.strptime(data['time'], "%Y-%m-%d %H:%M:%S")
+    """Realtime data for one PV string."""
+
+    def __init__(self, data: dict[str, Any]):
+        self.id = data.get('id')
+        self.pv_no = to_int(data.get('pvNo'))
+        self.vpv = to_float(data.get('vpv'))
+        self.ipv = to_float(data.get('ipv'))
+        self.ppv = to_float(data.get('ppv'))
+        self.today_pv = to_float(data.get('todayPv'))
+        self.sn = data.get('sn')
+        time = data.get('time')
+        self.time = datetime.datetime.strptime(time, "%Y-%m-%d %H:%M:%S") if time else None
